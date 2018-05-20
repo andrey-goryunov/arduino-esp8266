@@ -1,0 +1,64 @@
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+// Wemos 2.2
+#define TERMIST_B 4300 
+#define VIN 3.3
+
+WiFiClientSecure clientSecure;       // это нужно для функции GET запроса (GetRequest)
+WiFiClient client;
+const char* httpHost = "172.16.23.23";               
+const int httpPort = 8023;
+
+const char* httpsHost = "golgo.ru";               
+const int httpsPort = 443;
+
+char auth[] = "0d73ab7014c84b50960be927796eba6f";
+char ssid[] = "G";
+char pass[] = "4ebyrashka";
+
+bool button = false; // переменная о хранении статуса кнопки
+
+
+void GetHTTPRequest(String url)
+{
+  if (client.connect(httpHost, httpPort)) {
+      client.println("GET " + url + " HTTP/1.1");
+      client.println("Host: wemos 2.2");
+      client.println("Content-Type: application/x-www-form-urlencoded");
+      client.println("User-Agent: wemos 2.2");
+      client.println("Connection: close");
+      client.println();
+      client.stop();
+      delay(2);
+  }
+}
+
+
+BLYNK_WRITE(V0)
+{
+  button = param.asInt();                     // проверяем состояние кнопки
+  if (button)                                 // если кнопка была нажата
+  {
+    Serial.println("GetRequest");
+    GetHTTPRequest("/?key=next"); // выполняем эту функцию
+  }
+  return;
+}
+
+
+void setup()
+{
+  Serial.begin(19200);
+  Serial.println(" ");
+  Serial.println("Launch");
+  
+  Blynk.begin(auth, ssid, pass, IPAddress(172,16,23,66), 8442);
+}
+
+
+void loop()
+{
+  Blynk.run();
+}
