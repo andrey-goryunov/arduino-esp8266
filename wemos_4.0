@@ -1,0 +1,89 @@
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#define LED D4
+#define ANALOG A0
+#define BLYNK_GREEN     "#23C48E"
+
+#include <TimeLib.h>
+#include <WidgetRTC.h>
+
+BlynkTimer timer;
+WidgetRTC rtc;                  // инициализируем виджет часов реального времени
+WidgetTerminal terminal(V0);
+WidgetBridge bridge(V5); //Initiating Bridge Widget on V1 of Device A
+
+// Wemos 4.0
+
+bool isFirstConnect = true;     // Переменная для хранения состояния первый раз ли установленна связь
+char auth[] = "";
+char ssid[] = "";
+char pass[] = "";
+
+void reconnectBlynk()                    // функция которая проверяет соединение
+{
+  if (!Blynk.connected()) { //если соединения нет то
+    if (Blynk.connect()) {  // конектимся
+      BLYNK_LOG("Reconnected");    // выводим в лог
+
+    } else {
+      BLYNK_LOG("Not reconnected"); // выводим в лог
+    }
+  }
+}
+
+
+BLYNK_READ(V1)                            // Фоторезистор VT90N2 (LDR) 
+{
+  int lightness = analogRead(ANALOG);
+  //Serial.println(lightness);
+  Blynk.virtualWrite(V1, lightness); //sending to Blynk
+  Blynk.setProperty(V1, "color", BLYNK_GREEN);
+}
+
+BLYNK_WRITE(V14)                          // Кнопка info - посылает в виджет-терминал сообщение
+{
+  String currentTime = String(hour()) + ":" + minute() + ":" + second();
+  String currentDate = String(day()) + "/" + month() + "/" + year();
+  
+  if (param.asInt()) {
+  String Data1 = (currentTime + " " + currentDate + " current ip: " + WiFi.localIP()); 
+  String Data2 = ("Wemos 4.0 with BLYNK v" BLYNK_VERSION ": Device online");   
+   
+  bridge.virtualWrite(V17, Data1);    // Send from this terminal to remote terminal
+  delay(1);
+  bridge.virtualWrite(V17, Data2);    // Send from this terminal to remote terminal
+  
+  }
+  else {
+  }
+}
+
+BLYNK_CONNECTED() 
+{
+  // Synchronize time on connection
+  rtc.begin();
+  bridge.setAuthToken("2c824734932b46e4a1fd47f1d17e9da9");   // Token of the hardware B
+}
+
+void setup()
+{
+  Serial.begin(19200);
+  
+  pinMode (LED, OUTPUT);
+  digitalWrite(LED, HIGH);
+  Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,66), 8442);
+  timer.setInterval(160000L, reconnectBlynk);       // проверяем каждые 30 секунд, если все еще подключен к серверу
+  String Data = ("Wemos 4.0 with BLYNK v" BLYNK_VERSION ": Device online") ;    
+  bridge.virtualWrite(V17, Data);    // Send from this terminal to remote terminal
+}
+
+
+
+void loop()
+{
+  if (Blynk.connected()) {
+    Blynk.run(); // Запускаем Блинк
+  }
+  timer.run(); // Запускаем таймер
+}
