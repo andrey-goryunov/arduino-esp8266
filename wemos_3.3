@@ -283,10 +283,10 @@ void refreshState()                      // Если замечено движе
     flagProtection = false;
     intruderState == HIGH;
     GetHTTPSRequest("stop-stream.sh");
-    timer.setTimer(2000, reactiveSecurity, 1);  // это какой то пиздец
+    timer.setTimer(2000, reactiveSecurity, 1);  // возращаем значение с небольшой задержкой
 }
 
-void reactiveSecurity()                  // лютый пиздец просто, как объеденить это в одну функцию?
+void reactiveSecurity()                  // возвращаем значение после рефреша
 {
     securityStateX = 0;  
     flagProtection = true;
