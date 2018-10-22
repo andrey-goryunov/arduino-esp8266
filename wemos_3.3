@@ -20,12 +20,12 @@
 #define BLYNK_DARK_BLUE "#5F7CD8"
 #define BLYNK_WHITE     "#FFFFFF"
 
-char Mail[] = "";          // e-mail, куда будет все отправляться
+char Mail[] = "gryn87@gmail.com";          // e-mail, куда будет все отправляться
 String Subject = "Subject: Security ESP "; // тема сообщения на e-mail
 
-char auth[] = "";
-char ssid[] = "";
-char pass[] = "";
+char auth[] = "2c824734932b46e4a1fd47f1d17e9da9";
+char ssid[] = "G";
+char pass[] = "4ebyrashka";
 
 WidgetTerminal terminal(V8);    // регистрируем виджет-терминал
 WidgetRTC rtc;                  // инициализируем виджет часов реального времени
@@ -46,7 +46,53 @@ WiFiClient client;              // HTTP
 const int httpPort = 8023;      // HTTP порт 
 const int httpsPort = 443;      // HTTPS порт 
 const char* httpHost = "192.168.1.41";
-const char* httpsHost = "";
+const char* httpsHost = "golgo.ru";
+
+
+BLYNK_WRITE(V9)                          // TEST DEV
+{
+  if (param.asInt()) {
+    
+    Blynk.setProperty(V9, "color", BLYNK_RED);     // включаем
+    terminal.println(F("V9 ON"));
+    terminal.flush();
+    
+  } else {
+    
+    Blynk.setProperty(V9, "color", BLYNK_WHITE); // выключаем
+    terminal.println(F("V9 OFF"));
+    terminal.flush();
+  }
+}
+
+
+BLYNK_WRITE(V15)                         // Recording button
+{
+  if (param.asInt()) {
+    
+    GetHTTPSRequest("recording.sh");     // включаем
+    terminal.println(F("recording..."));
+    terminal.flush();
+    
+  } else {
+    
+    GetHTTPSRequest("stop-recording.sh"); // выключаем
+    terminal.println(F("stop-recording ..."));
+    terminal.flush();
+  }
+}
+
+
+BLYNK_WRITE(V12)                         // Кнопка Screenshoot send
+{
+  if (param.asInt()) {
+    GetHTTPSRequest("screenshoot.sh"); 
+    terminal.println(F("send screenshoot ..."));
+    terminal.flush();
+ 
+  } else {
+  }
+}
 
 
 BLYNK_WRITE(V17)                         // Write received string to local terminal from Wemos 4.0
@@ -77,35 +123,11 @@ BLYNK_WRITE(V4)                          // Кнопка info - посылает
   if (param.asInt()) {
     terminal.print(currentDate + (" ") + currentTime + (" current ip: "));
     terminal.println(WiFi.localIP());
-    terminal.println(F("Wemos 3.3 with BLYNK v" BLYNK_VERSION ": Device online"));
+    terminal.println(F("Wemos 3.4 with BLYNK v" BLYNK_VERSION ": Device online"));
     terminal.flush();
   }
 
   else {
-  }
-}
-
-
-BLYNK_WRITE(V7)                          // Кнопка запускает vlc-start-ip-tv.sh
-{
-  if (param.asInt()) {
-    GetHTTPRequest("vlc-start-ip-tv.sh"); 
-    terminal.println(F("IP TV - VLC player started!"));
-    terminal.flush();
-  } else {
-
-  }
-}
-
-
-BLYNK_WRITE(V13)                         // Кнопка запускает vlc-start-radio.sh
-{
-  if (param.asInt()) {
-    GetHTTPRequest("vlc-start-radio.sh");    
-    terminal.println(F("RADIO Record - VLC player started!"));
-    terminal.flush();
-  } else {
-
   }
 }
 
@@ -115,22 +137,26 @@ BLYNK_WRITE(V5)                          // Music Player widget - VLC
   String action = param.asStr();
 
   if (action == "play") {
-    // Do something
+    GetHTTPRequest("play");
+    terminal.println(F("Play"));
+    terminal.flush();
   }
   
   if (action == "stop") {
-    // Do something
+    GetHTTPRequest("stop");
+    terminal.println(F("Playback stopped"));
+    terminal.flush();
   }
   
   if (action == "next") {
     GetHTTPRequest("next");
-    terminal.println(F("VLC player - NEXT"));
+    terminal.println(F("Next >>"));
     terminal.flush();
   }
   
   if (action == "prev") {
     GetHTTPRequest("prev");
-    terminal.println(F("VLC player - PREV"));
+    terminal.println(F("Previous <<"));
     terminal.flush();
   }
 
@@ -154,24 +180,29 @@ BLYNK_WRITE(V3)                          // ползунок громкости 
 }
 
 
-BLYNK_WRITE(V6)                          // Включает и выключает компьютер - GetHTTPSRequest("wake-home.sh")
+BLYNK_WRITE(V6)                          // Включает и выключает компьютер
 {
+  String currentTime = String(hour()) + ":" + minute() + ":" + second();
+  String currentDate = String(day()) + "/" + month() + "/" + year();
+  
   if (param.asInt()) {
     
     GetHTTPSRequest("wake-home.sh");     // включаем
-    terminal.println(F("home wake... up or down?"));
+    terminal.print(currentDate + (" ") + currentTime + (": "));
+    terminal.println(F("home wake up"));
     terminal.flush();
     
   } else {
     
     GetHTTPSRequest("poweroff-home.sh"); // выключаем
-    terminal.println(F("home wake... up or down?"));
+    terminal.print(currentDate + (" ") + currentTime + (": "));
+    terminal.println(F("poweroff home"));
     terminal.flush();
   }
 }
 
 
-void GetHTTPRequest(String url)          // Функуция отправялет запрос к home
+void GetHTTPRequest(String url)          // Функуция отправялет GET запрос к home
 {
   if (client.connect(httpHost, httpPort)) {
     client.println("GET /?key=" + url + " HTTP/1.1");
@@ -186,7 +217,7 @@ void GetHTTPRequest(String url)          // Функуция отправяле�
 }
 
 
-void GetHTTPSRequest(String url)         // Функуция отправялет запрос к golgo.ru
+void GetHTTPSRequest(String url)         // Функуция отправялет GET запрос к golgo.ru
 {
   if (clientSecure.connect(httpsHost, httpsPort)) {
     clientSecure.println("GET /uxahMah5quoo4iew/" + url + " HTTP/1.1");
@@ -201,7 +232,7 @@ void GetHTTPSRequest(String url)         // Функуция отправяле�
 }
 
 
-BLYNK_WRITE(V2)                          // Считываем состояние кнопки (Виджет Button) и сохраняем значение в flagProtection
+BLYNK_WRITE(V2)                          // Считываем состояние кнопки "Активировать датчик движения" и сохраняем значение в flagProtection
 {
   flagProtection = param.asInt();        // Читаем состояние кнопки
 
@@ -277,16 +308,16 @@ void readPIRSensor()                     // функция для считыва
 }
 
 
-
-void refreshState()                      // Если замечено движение, перезапускает наблюдение, используя для этого АЖ ДВЕ МАТЬ ЕГО ФУНКЦИИ!!! все очень плохо
+void refreshState()                      // Если замечено движение, перезапускает наблюдение, используя для этого АЖ ДВЕ ФУНКЦИИ
 {
     flagProtection = false;
     intruderState == HIGH;
     GetHTTPSRequest("stop-stream.sh");
-    timer.setTimer(2000, reactiveSecurity, 1);  // возращаем значение с небольшой задержкой
+    timer.setTimer(2000, reactiveSecurity, 1);  // это наверно не хорошо
 }
 
-void reactiveSecurity()                  // возвращаем значение после рефреша
+
+void reactiveSecurity()                  // как объеденить это в одну функцию?
 {
     securityStateX = 0;  
     flagProtection = true;
@@ -310,9 +341,9 @@ void securityState()                     // Определяем состоян�
     //digitalWrite(RELAY, intruderState);         // Срабатывает реле
     timer.setTimer(200, sendSetting, 4);          // вызываем функкцию sendSetting 4 раза, с интервалом в 0,2 секунд
     timer.enable(timerSpeak_ID);                  // Включить таймер для функции Speak Пищалка
-    GetHTTPSRequest("telegram-screenshoot.sh");   // отправляем скриншот через Telegram
+    GetHTTPSRequest("screenshoot.sh");            // отправляем скриншот
     delay(10);
-    timer.setTimer(120000, refreshState, 1);       // через это время сига отключится и включится вновь (что бы записывать только движения)
+    timer.setTimer(12000, refreshState, 1);       // через это время сига отключится и включится вновь (что бы записывать только движения)
     
   }
 
