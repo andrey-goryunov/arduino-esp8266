@@ -49,23 +49,6 @@ const char* httpHost = "192.168.1.41";
 const char* httpsHost = "golgo.ru";
 
 
-BLYNK_WRITE(V9)                          // TEST DEV
-{
-  if (param.asInt()) {
-    
-    Blynk.setProperty(V9, "color", BLYNK_RED);     // включаем
-    terminal.println(F("V9 ON"));
-    terminal.flush();
-    
-  } else {
-    
-    Blynk.setProperty(V9, "color", BLYNK_WHITE); // выключаем
-    terminal.println(F("V9 OFF"));
-    terminal.flush();
-  }
-}
-
-
 BLYNK_WRITE(V15)                         // Recording button
 {
   if (param.asInt()) {
@@ -493,7 +476,7 @@ void sendSetting()                       // Совершаем действия 
 }
 
 
-void Speak()                             // Функция для Зуммера Пищалки (Кричалки)
+void Speak()                             // Функция для зуммера-пищалки
 {
   // Задаем частоту и длительность для пищалки
   tone(BUZZER, 3500, 50);
@@ -539,14 +522,13 @@ void setup()                             // настройки
   Blynk.connect();    // а потом пробуем уже конектиться
 
   // Настраиваем таймеры
-  timerPIRSensor_ID = timer.setInterval(1250L, readPIRSensor); // Дергаем функцию датчика движения раз в пол секунды
-  timerSpeak_ID = timer.setInterval(500L, Speak);              // Дергаем функцию
+  timerPIRSensor_ID = timer.setInterval(1250L, readPIRSensor); // Вызываем функцию датчика движения раз в пол секунды
+  timerSpeak_ID = timer.setInterval(500L, Speak);              // Вызываем функцию
   timer.disable(timerPIRSensor_ID);                            // отключаем таймер Датчика Движения
   timer.disable(timerSpeak_ID);                                // отключаем таймер Пищалки
   timer.setInterval(3000L, securityState);                     // Дергаем функцию Статуса охраны раз в секунду
   timer.setInterval(160000L, reconnectBlynk);                  // проверяем каждые 30 секунд, если все еще подключен к серверу
-
-  rtc.begin(); // запускаем виджет часов реального времени
+  rtc.begin();                                                 // запускаем виджет часов реального времени
 
   // Настраиваем виджеты
   // led1.on();
